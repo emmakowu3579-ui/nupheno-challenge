@@ -1,6 +1,6 @@
 # 🔬 NuPheno: Pan-Cancer Nuclear Phenotyping & Detection Challenge
 
-[![Benchmark](https://img.shields.io/badge/Benchmark-NuPheno-indigo?style=for-the-badge&logo=target)](index.html)
+[![Live Leaderboard](https://img.shields.io/badge/Live%20Leaderboard-Web%20Dashboard-brightgreen?style=for-the-badge&logo=githubpages)](https://emmakowu3579-ui.github.io/nupheno-challenge/)
 [![Metric](https://img.shields.io/badge/Metric-mAP%40%5B0.50%3A0.95%5D-green?style=for-the-badge)](LEADERBOARD.md)
 [![Dataset](https://img.shields.io/badge/Dataset-PanNuke%2019%20Tissues-blue?style=for-the-badge)](https://www.kaggle.com/datasets/andrewmvd/cancer-instance-segmentation-and-classification-2)
 [![Submissions](https://img.shields.io/badge/Submissions-Encrypted%20PRs-blueviolet?style=for-the-badge)](submissions/)
@@ -82,8 +82,8 @@ image_id,category_id,x,y,width,height,score
 
 ### 1️⃣ Clone the Repository & Install Dependencies
 ```bash
-git clone https://github.com/<your-org>/cv-code-bench.git
-cd cv-code-bench/challenge_01_pannuke_detection
+git clone https://github.com/emmakowu3579-ui/nupheno-challenge.git
+cd nupheno-challenge
 pip install -r starter_code/requirements.txt
 ```
 

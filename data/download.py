@@ -1,195 +1,118 @@
 """
-PanNuke Data Acquisition and Mock Generator.
-Supports fetching official dataset instructions or generating synthetic mock H&E patches with COCO annotations
-for testing, CI, and local rapid development.
+PanNuke Data Acquisition Utility.
+Downloads and verifies the official PanNuke Dataset from Kaggle.
+
+Dataset: andrewmvd/cancer-instance-segmentation-and-classification-2
+Source: Tissue Image Analytics (TIA) Centre, University of Warwick
+URL: https://www.kaggle.com/datasets/andrewmvd/cancer-instance-segmentation-and-classification-2
 """
 
 import argparse
-import json
 import os
+import subprocess
+import sys
 from pathlib import Path
-import numpy as np
-from PIL import Image, ImageDraw
+
+# Enable UTF-8 console output on Windows
+if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
+KAGGLE_DATASET = "andrewmvd/cancer-instance-segmentation-and-classification-2"
+KAGGLE_URL = f"https://www.kaggle.com/datasets/{KAGGLE_DATASET}"
 
 
-CATEGORIES = [
-    {"id": 1, "name": "Neoplastic", "supercategory": "cell"},
-    {"id": 2, "name": "Inflammatory", "supercategory": "cell"},
-    {"id": 3, "name": "Connective", "supercategory": "cell"},
-    {"id": 4, "name": "Dead", "supercategory": "cell"},
-    {"id": 5, "name": "Epithelial", "supercategory": "cell"},
-]
+def download_official_dataset(output_dir: Path):
+    """Downloads the official PanNuke dataset using the Kaggle CLI."""
+    output_dir.mkdir(parents=True, exist_ok=True)
+    print("=" * 72)
+    print("🔬 DOWNLOADING OFFICIAL PANNUKE HISTOPATHOLOGY DATASET")
+    print(f"📦 Kaggle Source: {KAGGLE_DATASET}")
+    print(f"🔗 URL: {KAGGLE_URL}")
+    print(f"📂 Target Directory: {output_dir}")
+    print("=" * 72)
+
+    try:
+        cmd = [
+            "kaggle", "datasets", "download",
+            "-d", KAGGLE_DATASET,
+            "-p", str(output_dir),
+            "--unzip"
+        ]
+        print(f"Running command: {' '.join(cmd)}")
+        result = subprocess.run(cmd, check=True)
+        print("\n✅ Download and extraction complete!")
+    except FileNotFoundError:
+        print("\n❌ Error: 'kaggle' CLI tool not found on PATH.")
+        print("Please install it with: pip install kaggle")
+        print("Or download manually from: " + KAGGLE_URL)
+        sys.exit(1)
+    except subprocess.CalledProcessError as e:
+        print(f"\n❌ Error during download: {e}")
+        print("Ensure your kaggle.json API token is placed in ~/.kaggle/ or C:\\Users\\<user>\\.kaggle\\")
+        sys.exit(1)
 
 
-def generate_mock_pannuke_patch(image_id: int, rng: np.random.Generator, size: int = 256):
-    """
-    Generate an H&E-like histology patch (pink/purple background) with multiple cell nuclei.
-    Returns the PIL Image and a list of COCO annotation dicts.
-    """
-    # Base H&E tissue color (pinkish-purple stroma/cytoplasm)
-    base_r = rng.integers(210, 245)
-    base_g = rng.integers(180, 215)
-    base_b = rng.integers(215, 245)
-    img_arr = np.full((size, size, 3), [base_r, base_g, base_b], dtype=np.uint8)
+def verify_dataset(data_dir: Path):
+    """Verifies that the downloaded dataset contains the expected PanNuke numpy arrays."""
+    if not data_dir.exists():
+        print(f"❌ Error: Directory does not exist: {data_dir}")
+        return False
 
-    # Add subtle texture noise
-    noise = rng.normal(0, 8, (size, size, 3)).astype(np.int16)
-    img_arr = np.clip(img_arr.astype(np.int16) + noise, 0, 255).astype(np.uint8)
-    image = Image.fromarray(img_arr)
-    draw = ImageDraw.Draw(image)
-
-    # Number of nuclei per patch
-    num_nuclei = rng.integers(12, 35)
-    annotations = []
-
-    # Category colors in purple/blue hematoxylin stains
-    cat_stains = {
-        1: (80, 40, 110),   # Neoplastic: dark purple/blue, larger
-        2: (50, 30, 90),    # Inflammatory: small, dense dark purple
-        3: (110, 70, 130),  # Connective: elongated spindle
-        4: (140, 120, 140), # Dead: pyknotic / fragmented gray-purple
-        5: (90, 50, 120),   # Epithelial: clustered medium purple
-    }
-
-    for ann_idx in range(num_nuclei):
-        category_id = int(rng.choice([1, 2, 3, 4, 5], p=[0.35, 0.25, 0.20, 0.05, 0.15]))
-        
-        # Dimensions based on category
-        if category_id == 1:
-            rx = rng.integers(8, 16)
-            ry = rng.integers(8, 16)
-        elif category_id == 2:
-            rx = rng.integers(4, 7)
-            ry = rng.integers(4, 7)
-        elif category_id == 3:
-            rx = rng.integers(10, 20)
-            ry = rng.integers(4, 8)
-        elif category_id == 4:
-            rx = rng.integers(3, 6)
-            ry = rng.integers(3, 6)
-        else:
-            rx = rng.integers(7, 13)
-            ry = rng.integers(7, 13)
-
-        cx = rng.integers(rx + 4, size - rx - 4)
-        cy = rng.integers(ry + 4, size - ry - 4)
-
-        x_min = cx - rx
-        y_min = cy - ry
-        x_max = cx + rx
-        y_max = cy + ry
-        width = x_max - x_min
-        height = y_max - y_min
-
-        stain = cat_stains[category_id]
-        draw.ellipse([x_min, y_min, x_max, y_max], fill=stain)
-
-        annotations.append({
-            "id": (image_id * 1000) + ann_idx,
-            "image_id": image_id,
-            "category_id": category_id,
-            "bbox": [float(x_min), float(y_min), float(width), float(height)],
-            "area": float(width * height),
-            "iscrowd": 0,
-        })
-
-    return image, annotations
+    npy_files = list(data_dir.rglob("*.npy"))
+    if len(npy_files) > 0:
+        print(f"✅ Verified: Found {len(npy_files)} numpy data files in {data_dir}:")
+        for f in npy_files[:10]:
+            print(f"   - {f.name} ({f.stat().st_size / (1024*1024):.1f} MB)")
+        return True
+    else:
+        print(f"⚠️ Warning: No .npy files found in {data_dir}.")
+        return False
 
 
-def generate_mock_dataset(output_dir: str = "data/mock_coco", num_train: int = 40, num_val: int = 15, num_test: int = 15, seed: int = 42):
-    """
-    Generate mock train/val/test COCO datasets with simulated H&E pathology patches.
-    """
-    out_path = Path(output_dir)
-    images_dir = out_path / "images"
-    images_dir.mkdir(parents=True, exist_ok=True)
-    rng = np.random.default_rng(seed)
-
-    splits = {
-        "train": num_train,
-        "val": num_val,
-        "test": num_test
-    }
-
-    current_img_id = 1
-    for split_name, count in splits.items():
-        images_meta = []
-        all_annotations = []
-
-        for _ in range(count):
-            img_filename = f"patch_{current_img_id:05d}.png"
-            img_file_path = images_dir / img_filename
-            
-            img, anns = generate_mock_pannuke_patch(current_img_id, rng)
-            img.save(img_file_path)
-
-            images_meta.append({
-                "id": current_img_id,
-                "file_name": img_filename,
-                "width": 256,
-                "height": 256
-            })
-            all_annotations.extend(anns)
-            current_img_id += 1
-
-        coco_data = {
-            "info": {
-                "description": f"PanNuke Mock Dataset ({split_name})",
-                "year": 2026,
-                "version": "1.0",
-            },
-            "licenses": [],
-            "images": images_meta,
-            "annotations": all_annotations,
-            "categories": CATEGORIES,
-        }
-
-        ann_path = out_path / f"annotations_{split_name}.json"
-        with open(ann_path, "w", encoding="utf-8") as f:
-            json.dump(coco_data, f, indent=2)
-
-        print(f"Generated {split_name} split: {len(images_meta)} images, {len(all_annotations)} bounding boxes at {ann_path}")
-
-
-def print_official_download_instructions():
-    print("""
+def print_instructions():
+    print(f"""
 ========================================================================
-OFFICIAL PANNUKE DATASET DOWNLOAD INSTRUCTIONS:
+🔬 OFFICIAL PANNUKE DATASET INSTRUCTIONS
 ========================================================================
-1. Official Kaggle Dataset (Recommended for Kaggle Notebooks):
-   - URL: https://www.kaggle.com/datasets/andrewmvd/cancer-instance-segmentation-and-classification-2
-   - Kaggle CLI: kaggle datasets download -d andrewmvd/cancer-instance-segmentation-and-classification-2
+1. Kaggle Dataset:
+   {KAGGLE_DATASET}
+   URL: {KAGGLE_URL}
 
-2. Official Warwick TIA Centre & Zenodo Archives:
-   - Warwick TIA: https://warwick.ac.uk/fac/cross_fac/tia/data/pannuke
-   - Zenodo: https://zenodo.org/records/3901832
-   
-   Download Fold 1, Fold 2, and Fold 3 (images.npy, masks.npy, types.npy)
-   and place them in `data/pannuke_raw/`:
-   data/pannuke_raw/
-   ├── Fold 1/
-   │   ├── images.npy
-   │   ├── masks.npy
-   │   └── types.npy
-   ├── Fold 2/
-   └── Fold 3/
+2. Contents:
+   - 7,000+ real 256x256 H&E tissue biopsy patches across 19 human tissue types.
+   - ~200,000 semi-automatically segmented and pathologist-verified cell nuclei.
+   - 5 nuclear phenotypes: Neoplastic, Inflammatory, Connective, Dead, Epithelial.
+   - Formats: images.npy, masks.npy, types.npy across 3 folds.
 
-3. Run conversion script:
+3. To download locally with Kaggle CLI:
+   kaggle datasets download -d {KAGGLE_DATASET} -p data/pannuke_raw/ --unzip
+
+4. To convert numpy arrays into standard COCO object detection format:
    python data/prepare_coco_pannuke.py --raw-dir data/pannuke_raw/ --output-dir data/processed_coco/
+
+5. On Kaggle Notebooks:
+   In the right-hand panel under 'Input', click '+ Add Input', search for:
+   '{KAGGLE_DATASET}' and click Add.
 ========================================================================
 """)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Download or generate PanNuke data.")
-    parser.add_argument("--generate-mock", action="store_true", help="Generate synthetic mock COCO dataset for testing")
-    parser.add_argument("--download-official", action="store_true", help="Print official download instructions")
-    parser.add_argument("--output-dir", type=str, default="data/mock_coco", help="Output directory for mock dataset")
-    parser.add_argument("--seed", type=int, default=42, help="Random seed")
+    parser = argparse.ArgumentParser(description="Acquire and verify official PanNuke dataset")
+    parser.add_argument("--download", action="store_true", help="Download official dataset via Kaggle CLI")
+    parser.add_argument("--verify", action="store_true", help="Verify downloaded dataset in target directory")
+    parser.add_argument("--data-dir", type=str, default="data/pannuke_raw", help="Path to raw dataset directory")
     args = parser.parse_args()
 
-    if args.download_official:
-        print_official_download_instructions()
+    target_dir = Path(args.data_dir)
+
+    if args.download:
+        download_official_dataset(target_dir)
+        verify_dataset(target_dir)
+    elif args.verify:
+        verify_dataset(target_dir)
     else:
-        # Default action is generating mock for seamless testing
-        generate_mock_dataset(output_dir=args.output_dir, seed=args.seed)
+        print_instructions()

@@ -1,7 +1,6 @@
-# 🏆 NuPheno Challenge: Official Live Leaderboard
-*Pan-Cancer Nuclear Phenotyping & Detection Benchmark*
+# 🏆 NuPheno: Nuclei Detection & Phenotyping Leaderboard
 
-**Last Updated:** 2026-11-06 16:26
+**Last Updated:** 2026-11-08 15:58
 
 | Rank | Team | mAP@[0.50:0.95] | Date |
 | :--- | :--- | :--- | :--- |

@@ -1,0 +1,38 @@
+[
+  {
+    "image_id": 41,
+    "category_id": 1,
+    "bbox": [105.0, 78.5, 22.0, 19.5],
+    "score": 0.952
+  },
+  {
+    "image_id": 41,
+    "category_id": 2,
+    "bbox": [42.0, 185.0, 10.5, 9.8],
+    "score": 0.884
+  },
+  {
+    "image_id": 41,
+    "category_id": 3,
+    "bbox": [150.2, 120.0, 18.0, 8.5],
+    "score": 0.793
+  },
+  {
+    "image_id": 42,
+    "category_id": 1,
+    "bbox": [88.0, 94.2, 24.1, 20.0],
+    "score": 0.912
+  },
+  {
+    "image_id": 42,
+    "category_id": 5,
+    "bbox": [175.4, 60.1, 15.2, 14.8],
+    "score": 0.835
+  },
+  {
+    "image_id": 43,
+    "category_id": 4,
+    "bbox": [65.0, 210.0, 6.5, 6.2],
+    "score": 0.720
+  }
+]

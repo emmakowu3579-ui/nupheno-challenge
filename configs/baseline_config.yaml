@@ -1,0 +1,36 @@
+# Hyperparameters & Paths for PanNuke Faster R-CNN Baseline
+experiment_name: "faster_rcnn_resnet50_fpn_baseline"
+seed: 42
+
+data:
+  train_images_dir: "data/mock_coco/images"
+  train_annotations: "data/mock_coco/annotations_train.json"
+  val_images_dir: "data/mock_coco/images"
+  val_annotations: "data/mock_coco/annotations_val.json"
+  test_images_dir: "data/mock_coco/images"
+  test_annotations: "data/mock_coco/annotations_test.json"
+  num_classes: 6  # 5 cell categories + 1 background
+  image_size: [256, 256]
+
+model:
+  backbone: "resnet50"
+  pretrained: true
+  trainable_backbone_layers: 3
+
+training:
+  batch_size: 8
+  epochs: 10
+  lr: 0.0005
+  momentum: 0.9
+  weight_decay: 0.0005
+  lr_step_size: 4
+  lr_gamma: 0.1
+  checkpoint_dir: "checkpoints"
+  save_every: 2
+  log_interval: 10
+  device: "cuda"  # falls back to "cpu" if unavailable
+
+inference:
+  confidence_threshold: 0.3
+  nms_iou_threshold: 0.45
+  output_submission_path: "sample_submission/submission_baseline.json"

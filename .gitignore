@@ -1,0 +1,51 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+
+# IDE and editors
+.vscode/
+.idea/
+*.swp
+
+# Large raw datasets & hidden keys
+*.npy
+*.npz
+*.tar
+*.tar.gz
+*.zip
+data/pannuke_raw/
+data/processed_coco/
+data/mock_coco/
+data/test_labels_hidden.csv
+
+# Private keys (NEVER COMMIT)
+*.private.pem
+*private_key.pem
+keys/private_key.pem
+
+# Participant unencrypted raw CSV submissions (Must only commit .enc)
+submissions/*.csv
+!submissions/sample_submission.csv
+
+# Keep encrypted submission files and public materials
+!submissions/*.enc
+!submissions/**/*.enc
+!submissions/README.md
+!starter_code/public_key.pem
+!data/public/*.csv
+!*.json
+!*.csv
+!*.yml
+!*.yaml
+!*.html
+!*.md
